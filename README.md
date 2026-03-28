@@ -4,7 +4,6 @@
 
 **Author:** Wejdan Alharthi  
 **Framework:** NeuralEstimators.jl (Simulation-Based Inference)
-
 **Language:** Julia  
 
 ---
