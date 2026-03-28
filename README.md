@@ -101,6 +101,22 @@ NBE/
 
 ---
 
+## 📚 Supporting and Citation
+
+This project is built using the NeuralEstimators.jl package developed by Matthew Sainsbury-Dale.
+
+If you use this repository in your research or other activities, please consider citing:
+
+@misc{NeuralEstimators.jl,
+  title = {{NeuralEstimators.jl}: A Julia package for efficient simulation-based inference using neural networks},
+  author = {Sainsbury-Dale, Matthew},
+  year = {2026},
+  note = {Version 0.2.0},
+  howpublished = {\url{https://github.com/msainsburydale/NeuralEstimators.jl}}
+}
+
+---
+
 ### 🎯 Goal
 
 Build a scalable and efficient framework for **spatio-temporal parameter inference** using neural networks, effectively bypassing expensive and complex likelihood computations.
