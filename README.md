@@ -70,6 +70,7 @@ The model demonstrates strong generalization performance:
 ### Visualization
 
 The figure below compares true and predicted parameters on the test set:
+![Assessment](assets/assessment_results.png)
 
 
 ### Parameter-wise performance:
