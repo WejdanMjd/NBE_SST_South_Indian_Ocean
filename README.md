@@ -1,152 +1,151 @@
-# 🌊 Spatio-Temporal Neural Estimator for Sea Surface Temperature
-
+# Simulation-Based Inference for Spatio-Temporal Sea Surface Temperature Models using Neural Bayes Estimators
+Likelihood-free inference for spatio-temporal Gaussian random fields using amortized neural Bayes estimators.
 ![Julia](https://img.shields.io/badge/Julia-1.12-blue)
-![Status](https://img.shields.io/badge/status-completed-brightgreen)
 
-Author: Wejdan Majed Alharthi  
-Framework: NeuralEstimators.jl (Simulation-Based Inference)  
-Backend: Flux.jl + CUDA.jl  
-Language: Julia  
----
+## Overview
 
-## 📌 Overview
+This repository presents a proof-of-concept application of Neural Bayes Estimators (NBE) for simulation-based inference in a spatio-temporal Gaussian random field model motivated by sea surface temperature (SST) dynamics.
 
-This project develops a **simulation-based inference pipeline** for learning parameters of a **spatio-temporal Gaussian Random Field (GRF)** using a **Neural Bayes Estimator (NBE)**.
-
-The model infers underlying physical parameters from simulated **Sea Surface Temperature (SST)** fields, capturing both **spatial correlation** and **temporal dependence**.
+The goal is to infer two model parameters from simulated SST fields: a spatial range parameter controlling spatial dependence, and a temporal dependence parameter controlling AR(1) dynamics. The full pipeline includes data simulation, preprocessing, GPU-based neural estimator training, and parameter recovery assessment using NeuralEstimators.jl.
 
 ---
 
-## 🌍 Why This Matters
+## Statistical Model
 
-This project demonstrates how **simulation-based neural inference** can provide scalable and efficient alternatives to traditional likelihood-based methods, especially in complex spatio-temporal settings.
+We consider a spatio-temporal Gaussian random field model for sea surface temperature with parameter vector
 
----
+θ = (ρ, ϕ)^T
 
-## 🧠 Key Idea
+where:
 
-We simulate data using:
+- ρ controls spatial dependence through a Matérn covariance structure  
+- ϕ controls temporal dependence through an AR(1) process
 
-- **Spatial correlation** → Matérn covariance ($\nu = 1.5$)  
-- **Temporal dependence** → AR(1) process  
+Spatial covariance is modeled using a Matérn kernel (ν = 1.5), while temporal evolution follows an autoregressive process.
 
-To make the data compatible with neural architectures:
-
-> We apply **first-order temporal differencing**, making the data **exchangeable**, enabling the use of a **DeepSet + CNN architecture**.
+To facilitate exchangeable learning with DeepSet-based neural architectures, first-order temporal differencing is applied prior to inference.
 
 ---
 
-## ⚙️ Pipeline
+## Inference Pipeline
 
-### 1. Data Generation
-- Sample parameters $\theta = (\theta_1, \theta_2)$  
-- Simulate spatio-temporal fields  
-- Apply first-order differencing  
+### 1. Prior Sampling and Simulation
+Parameters θ = (ρ, ϕ) are sampled from prior distributions, and spatio-temporal Gaussian random fields are simulated under a Matérn spatial covariance model and AR(1) temporal dependence.
 
-### 2. Preprocessing
-- Handle variable temporal length  
-- Standardize all samples to fixed length ($T = 9$)  
+### 2. Data Preprocessing
+First-order temporal differencing is applied to promote exchangeability, and simulated samples are standardized to a fixed temporal length for neural network training.
 
-### 3. Model Training
-- DeepSet + CNN architecture  
-- GPU-based training (CUDA)  
-- Neural parameter estimation  
+### 3. Neural Estimator Training
+A DeepSet-CNN architecture is trained using Neural Bayes Estimation to amortize parameter inference from simulated fields.
 
-### 4. Evaluation
-- Test-set prediction  
-- RMSE, MAE, and bias computation  
-- Visualization (true vs predicted)  
-- Built-in assessment via `NeuralEstimators.jl`
+### 4. Parameter Recovery Assessment
+Estimator performance is evaluated on held-out test simulations using parameter recovery diagnostics, including RMSE, MAE, and prediction bias.
 
 ---
 
-## 📊 Results
+## Results
 
-The model demonstrates strong generalization performance:
+The estimator demonstrates strong parameter recovery on held-out simulations.
 
-- **Test RMSE ≈ 0.05**
-- **Test MAE ≈ 0.03**
+### Parameter Recovery
 
-### Visualization
+| Parameter | RMSE | Interpretation |
+|---------|------|----------------|
+| ρ (spatial range) | 0.018 | strong recovery |
+| ϕ (temporal dependence) | 0.069 | more difficult to recover |
 
-The figure below compares true and predicted parameters on the test set:
+Spatial dependence is recovered more accurately than temporal dependence, suggesting that dynamic structure remains the more difficult inferential component under the current architecture.
+
+### Evaluation Metrics
+- Test RMSE ≈ 0.05  
+- Test MAE ≈ 0.03  
+- Bias assessed through parameter recovery diagnostics
+
+### Assessment Visualization
+True versus predicted parameter estimates are shown in the assessment figure below.
+
 ![Assessment](assets/assessment_results.png)
 
+---
+## Limitations
 
-### Parameter-wise performance:
+Current limitations include:
 
-- **θ₁ (spatial range):**
-  - RMSE ≈ 0.018 → very high accuracy  
+- evaluation is based on simulated data only  
+- uncertainty calibration is not yet assessed  
+- no benchmark against classical inference methods is currently included
 
-- **θ₂ (temporal dependence):**
-  - RMSE ≈ 0.069 → more challenging due to temporal dynamics  
+Benchmarking against likelihood-based or MCMC alternatives remains future work.
 
-> The results show that spatial structure is easier to recover than temporal dependence in the current architecture.
+  ---
+
+## Reproducibility
+
+To reproduce the full workflow:
+
+```julia
+using Pkg
+Pkg.activate(".")
+Pkg.instantiate()
+```
+
+The repository includes:
+
+- simulation and preprocessing notebooks  
+- processed training/validation/test datasets  
+- trained estimator checkpoint  
+- assessment scripts and visualization outputs
+
+Processed data are included for immediate reproducibility, while raw data can be regenerated using the provided simulation pipeline.
 
 ---
 
-## 📊 Dataset
+## Repository Structure
 
-| Split | Samples |
-| :--- | :--- |
-| Train | 10,000 |
-| Validation | 1,000 |
-| Test | 500 |
-
-**Sample Shape:**
-- $(21, 21, 1, 9)$ after preprocessing  
-
----
-
-## 📁 Project Structure
-
-```text
 NBE/
-│
 ├── data/
-│   ├── raw/            # (excluded)
-│   └── processed/      # training-ready data
-│
 ├── notebooks/
-│   ├── data_preprocessing.ipynb
-│   └── data_training.ipynb
-│
-├── assets/
-│   └── assessment_results.png   # evaluation visualization
-│
 ├── models/
-│   └── nbe_model.jld2          # trained Neural Bayes Estimator
-│
-├── docs/
-│   └── challenges.md           # detailed challenges and solutions
-│
-├── Project.toml
-├── Manifest.toml
-└── README.md
-```
+├── assets/
+└── docs/
 
-### 💾 Data Management
+See individual folders for preprocessing, training, and assessment components.
 
-* **Processed Data:** Included for direct training to ensure immediate reproducibility.
-* **Raw Data:** Excluded from the repository due to its large storage footprint.
-* **Full Pipeline:** The provided scripts allow for the complete regeneration of datasets from scratch.
+---
+## Computational Environment
+Julia 1.12  
+Flux.jl  
+CUDA.jl  
+NeuralEstimators.jl
+---
+## Future Directions
+
+Potential extensions include:
+
+- uncertainty-aware posterior inference using NPE or NRE  
+- improved architectures for temporal dependence recovery  
+- applications to real sea surface temperature observations  
+- extensions to more complex spatio-temporal extreme-value models
 
 ---
 
-### 🧪 Technologies
+## Connection to NeuralEstimators.jl
 
-* **Julia:** The core language used for high-performance scientific computing.
-* **NeuralEstimators.jl:** For developing and evaluating neural estimators.
-* **Flux.jl:** The primary library for neural network architectures.
-* **CUDA.jl + cuDNN:** Leveraged for GPU acceleration and optimized deep learning primitives.
-* **CairoMakie & AlgebraOfGraphics:** Used for high-quality, declarative data visualization and plotting.
+This repository serves as a proof-of-concept application built using NeuralEstimators.jl for spatio-temporal simulation-based inference.
 
 ---
+## Related Reference
 
-### 📚 Supporting and Citation
+Primary methodological background:
 
-This project builds on:
-```
+- Sainsbury-Dale, Zammit-Mangion, and Huser (2024), Likelihood-Free Parameter Estimation with Neural Bayes Estimators.
+
+---
+## Citation
+
+If you use this repository, please consider citing:
+
+```bibtex
 @misc{NeuralEstimators.jl,
   title = {{NeuralEstimators.jl}: A Julia package for efficient simulation-based inference using neural networks},
   author = {Sainsbury-Dale, Matthew},
@@ -154,22 +153,24 @@ This project builds on:
 }
 ```
 
-## 🎯 Goal
-Build a scalable framework for **spatio-temporal parameter inference** using neural networks, avoiding explicit likelihood computation.
+and the methodological reference:
+
+```bibtex
+@article{SainsburyDale2024,
+  author = {Sainsbury-Dale, Matthew and Zammit-Mangion, Andrew and Huser, Raphael},
+  title = {Likelihood-Free Parameter Estimation with Neural Bayes Estimators},
+  journal = {The American Statistician},
+  year = {2024},
+  doi = {10.1080/00031305.2023.2249522}
+}
+```
 
 ---
 
-## ⚠️ Challenges and Solutions
+## Acknowledgements
 
-A detailed discussion of engineering challenges and their solutions is available here:
-
-👉 [View Challenges and Solutions](docs/challenges.md)
+This work builds on the NeuralEstimators.jl framework developed by Matthew Sainsbury-Dale and collaborators.
 
 ---
 
-## ⭐ Project Status
-**Completed** (Training + Evaluation + Visualization)
-
-### Future work may include:
-* **Improving temporal parameter estimation:** Refining the model's ability to capture time-series dynamics.
-* **Applying the model to real SST datasets:** Transitioning from simulations to real-world Sea Surface Temperature data.
+This repository is an ongoing research prototype and proof-of-concept for simulation-based spatio-temporal inference.
