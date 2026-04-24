@@ -114,11 +114,13 @@ NBE/
 See individual folders for preprocessing, training, and assessment components.
 
 ---
+
 ## Computational Environment
 Julia 1.12  
 Flux.jl  
 CUDA.jl  
 NeuralEstimators.jl
+
 ---
 ## Future Directions
 
